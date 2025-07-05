@@ -29,17 +29,18 @@ jobs:
       run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "M@FY666!" -Force)
 
     - name: Stabilize Daemon
-      run: timeout /t 20
+      run: Start-Sleep -Seconds 20
 
     - name: Launch Agent Port Bridge
       run: Start-Process .\ngrok\ngrok.exe "tcp --region=us 3389"
 
     - name: Fetch Session Route
       run: |
-        timeout /t 5
+        Start-Sleep -Seconds 5
         Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels | ConvertTo-Json -Depth 10
 
     - name: Maintain Runtime with Anti-Idle
+      shell: cmd
       run: |
         for /L %%x in (1,1,360) do (
           echo still alive %%x
