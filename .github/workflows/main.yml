@@ -1,0 +1,47 @@
+name: CI/CD Runner Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Fetch Runtime Tools
+      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+
+    - name: Extract Archive
+      run: Expand-Archive ngrok.zip
+
+    - name: Initialize Tunneling Agent
+      run: .\ngrok\ngrok.exe authtoken $Env:GOD
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.GOD }}
+
+    - name: Enable Remote Access Policy
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+    - name: Provision Access Credential
+      run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "MAFY666" -Force)
+
+    - name: Stabilize Daemon
+      run: timeout /t 20
+
+    - name: Launch Agent Port Bridge
+      run: Start-Process .\ngrok\ngrok.exe "tcp --region=us 3389"
+
+    - name: Fetch Session Route
+      run: |
+        timeout /t 5
+        Invoke-RestMethod -Uri http://127.0.0.1:4040/api/tunnels | ConvertTo-Json -Depth 10
+
+    - name: Maintain Runtime with Anti-Idle
+      run: |
+        for /L %%x in (1,1,360) do (
+          echo still alive %%x
+          timeout /t 60 >nul
+        )
