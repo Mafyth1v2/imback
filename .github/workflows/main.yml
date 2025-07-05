@@ -15,9 +15,9 @@ jobs:
       run: Expand-Archive ngrok.zip
 
     - name: Initialize Tunneling Agent
-      run: .\ngrok\ngrok.exe authtoken $Env:GOD
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
-        NGROK_AUTH_TOKEN: ${{ secrets.GOD }}
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
     - name: Enable Remote Access Policy
       run: |
